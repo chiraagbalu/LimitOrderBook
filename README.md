@@ -30,9 +30,15 @@ If we had sparse prices, say for an orderbook used for US equities, we may want 
 
 ### Add/Cancels outpace executions:
 
-Anecdotally, most of the information coming into a book is about the different adds and cancels of liquidity. 
+On average, most of the information coming into a book is about the different adds and cancels of liquidity. 
 
 Executions still happen, but its better to optimize for the more frequent activity
+
+### Update Locations:
+
+Usually, most updates occur close to the inside of the book
+
+So we can store the levels in a sorted array, as on average we only need to go 1-10 levels into the book
 
 
 ### Reasonable Volatility:
@@ -60,20 +66,23 @@ If we care about price/time priority , we'll want to use a data structure that c
 
 TOOD
 
+
 ## Architecture
 
-assuming a liquid book, we can pre-allocate vectors of limit objects sorted by price, based on likely range of price movement over some period
+assuming a liquid book, we can pre-allocate vectors of level objects sorted by price, based on likely range of price movement over some period
 
 if we have a sparse book, we might instead want to use a binary tree sorted by price, with a balancing mechanism to maintain O(logM) operations
 
 we'll store an vector for bids, and an vector for asks
 
-each limit object will just be a float containing the amount of volume, assuming price time priority unimportant
+each level object will just be a float containing the amount of volume, assuming price time priority unimportant
 
-the limit object will also be entered into a map of limit prices to start
+each order will have information about the level its at, as well as its quantity 
+
+given the order's id, we can quickly update the book level's quantity since it knows what level its at - we don't have to search for it
+
+for the purposes of price time priority, we'll want the level to maintain a doubly linked list 
 
 in the case of the tree of limits, we'll want each limit to have a parent, such that we can quickly update the best bid/offer if a limit is deleted
 
-for the purposes of price time priority, we'll instead want the limit object to be a doubly linked list of order objects
-
-we'll also want to store orders in a order map, keyed by ID for easy canceling, etc
+we'll also want to store orders in a order map, keyed by ID for easy canceling and access
